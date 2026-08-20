@@ -31,7 +31,19 @@ Open [http://localhost:3000](http://localhost:3000) to view the app.
 - `npm run lint` — lint the codebase
 - `npm test` — run the test suite
 
+## Local Setup
+
+Copy `.env.example` to `.env.local` (for Next.js) and `.env` (for the
+Prisma CLI), filling in `DATABASE_URL` and `AUTH_SECRET`
+(`npx auth secret` generates one). Then apply the database schema:
+
+```bash
+npx prisma migrate dev
+```
+
 ## Project Status
 
-**Phase 1: Project Bootstrap** — minimal scaffold only, no features yet.
-See `DEVELOPMENT_PLAN.md` for what's next.
+**Phase 2: Auth & Account Foundation** — email/password sign up, log in,
+log out, protected `/dashboard`, and password reset (reset links are
+logged to the server console — no email provider configured yet). See
+`DEVELOPMENT_PLAN.md` for what's next.

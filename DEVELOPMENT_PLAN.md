@@ -3,21 +3,18 @@
 Builds out [USER_STORIES.md](./USER_STORIES.md) in testable phases. Each
 phase ships a working, demoable slice — nothing is "big bang." Phase 1 is
 intentionally minimal: just enough to get a real Next.js app committed and
-pushed to GitLab on `main`. Every phase after that happens on its own
-branch.
+pushed to GitHub on `main`. Every phase after that happens on `dev`.
 
 ---
 
 ## Branching Strategy
 
-- **Phase 1** — commit directly to `main`. This is the only phase that
-  touches `main` directly.
-- **Phase 2 onward** — one branch per phase, e.g. `feature/phase-2-auth`,
-  `feature/phase-3-theming`, branched from `main` after the previous phase
-  is merged. Merge back to `main` (via MR) once a phase's Definition of Done
-  is met.
-- Keep phases small enough that each MR is reviewable in one sitting. If a
-  phase starts to sprawl, split it (e.g. 4a/4b) rather than let one branch
+- **Phase 1** — committed directly to `main` (done — see repo history).
+- **Phase 2 onward** — all work happens on `dev`, merged back to `main` (via
+  PR) once a phase's Definition of Done is met. One commit (or a small
+  handful) per phase keeps history legible even without per-phase branches.
+- Keep phases small enough that each PR is reviewable in one sitting. If a
+  phase starts to sprawl, split it (e.g. 4a/4b) rather than let one merge
   carry two epics.
 
 ---
@@ -30,18 +27,20 @@ branch.
 - **Framework:** Next.js (App Router, TypeScript)
 - **Styling:** Tailwind CSS, with theme values driven by CSS custom
   properties so the 8 theme skins are data, not duplicated components
-- **Auth:** Auth.js (NextAuth) — credentials + Google OAuth
-- **Database/ORM:** Prisma + PostgreSQL (e.g. Neon/Supabase for hosted dev
-  DB; SQLite acceptable for local-only early phases)
+- **Auth:** Auth.js (NextAuth v5) — email/password (credentials) only for
+  now; OAuth providers can be added later without schema churn
+- **Database/ORM:** Prisma + SQLite locally through the early phases; swap
+  to hosted Postgres (Neon/Supabase) when deploying
 - **Testing:** Vitest + React Testing Library (unit/component), Playwright
   (e2e) introduced once there's a real flow to test
-- **Hosting target:** Vercel (or GitLab CI/CD to your host of choice)
+- **Hosting target:** Vercel (or GitHub Actions CI/CD to your host of
+  choice)
 
 ---
 
-## Phase 1 — Project Bootstrap *(branch: `main`)*
+## Phase 1 — Project Bootstrap *(branch: `main`)* ✅ done
 
-**Goal:** A minimal, working Next.js app, committed and pushed to GitLab on
+**Goal:** A minimal, working Next.js app, committed and pushed to GitHub on
 `main`. No features yet — just a clean, deployable skeleton everything else
 builds on.
 
@@ -58,20 +57,20 @@ builds on.
       — no theme styling yet)
 - [ ] One smoke test (e.g. renders the home page) with Vitest + RTL wired up
       so `npm test` works from commit one
-- [ ] `git init`, initial commit, create GitLab project, push `main`
-- [ ] (Optional) minimal GitLab CI: `npm ci && npm run lint && npm run
-      build && npm test` on push — cheap insurance, not required to ship
-      this phase
+- [x] `git init`, initial commit, create GitHub project, push `main`
+- [ ] (Optional) minimal GitHub Actions CI: `npm ci && npm run lint && npm
+      run build && npm test` on push — cheap insurance, not required to
+      ship this phase
 
 **Definition of Done / Testing**
-- `npm run dev` runs locally with no errors.
-- `npm run build` succeeds.
-- `npm test` runs and passes (one smoke test).
-- Repo is visible on GitLab with this history on `main`.
+- [x] `npm run dev` runs locally with no errors.
+- [x] `npm run build` succeeds.
+- [x] `npm test` runs and passes (one smoke test).
+- [x] Repo is visible on GitHub with this history on `main`.
 
 ---
 
-## Phase 2 — Auth & Account Foundation *(branch: `feature/phase-2-auth`)*
+## Phase 2 — Auth & Account Foundation *(branch: `dev`)*
 
 **Goal:** Real accounts. A user can sign up, log in, log out, and hit a
 protected route.
@@ -79,31 +78,41 @@ protected route.
 **Covers:** Epic 1 (1.1–1.4)
 
 **Tasks**
-- [ ] Provision database, add Prisma schema for `User` (+ password hash
-      field, or delegate to OAuth-only if you'd rather skip credentials)
-- [ ] Wire up Auth.js with credentials + Google provider
-- [ ] Sign-up page + validation (email format, password strength, confirm)
-- [ ] Log-in page + error states (wrong password/unknown account, generic
+- [x] Provision database (Prisma + SQLite locally), add `User` model
+      (email, password hash)
+- [x] Wire up Auth.js (v5) with a credentials provider
+- [x] Sign-up page + validation (email format, password strength, confirm)
+- [x] Log-in page + error states (wrong password/unknown account, generic
       message)
-- [ ] Log-out action
-- [ ] Password reset flow (request email → reset link → new password)
-- [ ] Basic protected-route middleware (redirect unauthenticated users to
+- [x] Log-out action
+- [x] Password reset flow (request → reset link → new password). No email
+      service configured yet, so the reset link is logged to the server
+      console in dev instead of actually emailed — swap in a real mailer
+      when one's chosen.
+- [x] Basic protected-route middleware (redirect unauthenticated users to
       login)
-- [ ] Placeholder "dashboard" page behind auth, just to prove the gate works
-- [ ] Account deletion + change email/password (can trail the phase if
-      time-boxed — flag if you want this split out)
+- [x] Placeholder "dashboard" page behind auth, just to prove the gate works
+- [ ] Account deletion + change email/password (deferred — flagged per the
+      plan's own allowance to trail this phase)
 
 **Definition of Done / Testing**
-- Manual: sign up → land on placeholder dashboard → log out → log back in.
-- Manual: wrong password shows a graceful error; duplicate email on sign-up
-  is rejected.
-- Automated: unit tests for validation logic; one Playwright flow
-  (sign up → logout → login) if e2e is set up by this point.
-- `npm run build` still succeeds; CI (if enabled) green.
+- [x] Manual: sign up → land on placeholder dashboard → log out → log back
+      in.
+- [x] Manual: wrong password shows a graceful error; duplicate email on
+      sign-up is rejected; unauthenticated `/dashboard` redirects to
+      `/login`.
+- [x] Manual: password reset end-to-end (request → console-logged link →
+      set new password → old password rejected, new one works); a used or
+      invalid token is rejected.
+- [x] Automated: unit tests for validation logic (signup/login/reset
+      schemas), password hashing, and reset-token generation.
+- [ ] Automated: Playwright e2e flow — deferred; the above was verified
+      manually via `curl` against the dev server instead.
+- [x] `npm run build`, `npm run lint`, and `npm test` all succeed.
 
 ---
 
-## Phase 3 — Theme System & Selection *(branch: `feature/phase-3-theming`)*
+## Phase 3 — Theme System & Selection *(branch: `dev`)*
 
 **Goal:** The 8 theme skins (4 families × A/B) exist as real, swappable
 styling, with a browse → preview → confirm flow, persisted per user.
@@ -136,7 +145,7 @@ styling, with a browse → preview → confirm flow, persisted per user.
 
 ---
 
-## Phase 4 — Daily Planner Core *(branch: `feature/phase-4-planner-core`)*
+## Phase 4 — Daily Planner Core *(branch: `dev`)*
 
 **Goal:** The actual planner. A themed user can manage a real day: tasks,
 schedule, notes, top priorities.
@@ -168,7 +177,7 @@ schedule, notes, top priorities.
 
 ---
 
-## Phase 5 — Planner Extras *(branch: `feature/phase-5-planner-extras`)*
+## Phase 5 — Planner Extras *(branch: `dev`)*
 
 **Goal:** The features that make it feel like a full planner, not just a
 to-do list.
@@ -198,7 +207,7 @@ week/month/search — if it's getting large for one MR.)*
 ---
 
 ## Phase 6 — Mobile Polish, Responsive Scale-Up & Resilience
-*(branch: `feature/phase-6-responsive-polish`)*
+*(branch: `dev`)*
 
 **Goal:** Everything built so far genuinely feels mobile-first, scales well
 to larger screens, and holds up on a flaky connection.
@@ -230,7 +239,7 @@ to larger screens, and holds up on a flaky connection.
 ---
 
 ## Phase 7 — Settings & Account Management
-*(branch: `feature/phase-7-settings`)*
+*(branch: `dev`)*
 
 **Goal:** Round out account/profile controls and data ownership features.
 
@@ -250,7 +259,7 @@ to larger screens, and holds up on a flaky connection.
 ---
 
 ## Phase 8 — Hardening & Launch Readiness
-*(branch: `feature/phase-8-launch-readiness`)*
+*(branch: `dev`)*
 
 **Goal:** Production-ready polish pass before calling v1 done.
 
